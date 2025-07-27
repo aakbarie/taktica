@@ -9,12 +9,11 @@ library(shinyWidgets)
 library(httr)
 library(jsonlite)
 
-# Mock data
-team_members <- tibble::tibble(
-  Name = c("Akbar", "Amanda", "Steve", "Romina"),
-  Role = c("Manager", "Senior DS", "Senior DS", "Junior DS"),
-  Weekly_Capacity_Hours = c(20, 40, 40, 15)
-)
+# Ensure data directory exists
+if (!dir.exists("data")) dir.create("data")
+project_file <- "data/projects.parquet"
+
+# Initial mock data for first run
 initial_projects <- tibble::tibble(
   Project = c("HNI 360", "Readmission GenAI", "DUR Risk Flag"),
   Owner = c("Amanda", "Steve", "Akbar"),
@@ -22,6 +21,21 @@ initial_projects <- tibble::tibble(
   End_Date = as.Date(c("2024-11-01", "2024-10-15", "2024-09-20")),
   Category = c("Evaluation", "GenAI", "ML"),
   Status = c("Active", "Active", "Active")
+)
+
+# Load or create projects parquet
+if (file.exists(project_file)) {
+  projects_df <- read_parquet(project_file)
+} else {
+  projects_df <- initial_projects
+  write_parquet(projects_df, project_file)
+}
+
+# Mock other data
+team_members <- tibble::tibble(
+  Name = c("Akbar", "Amanda", "Steve", "Romina"),
+  Role = c("Manager", "Senior DS", "Senior DS", "Junior DS"),
+  Weekly_Capacity_Hours = c(20, 40, 40, 15)
 )
 allocations <- tibble::tibble(
   Week = rep(seq(as.Date("2024-08-01"), by = "week", length.out = 6), each = 4),
@@ -43,8 +57,8 @@ ui <- dashboardPage(
       hr(),
       textInput("ask", "Ask Taktica", "What is our current project load?"),
       verbatimTextOutput("ollama_response"),
-      selectInput("filter_owner", "Filter by Owner", choices = c("All", unique(initial_projects$Owner)), selected = "All"),
-      selectInput("filter_category", "Filter by Category", choices = c("All", unique(initial_projects$Category)), selected = "All")
+      selectInput("filter_owner", "Filter by Owner", choices = c("All", unique(projects_df$Owner)), selected = "All"),
+      selectInput("filter_category", "Filter by Category", choices = c("All", unique(projects_df$Category)), selected = "All")
     )
   ),
   dashboardBody(
@@ -99,7 +113,7 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
   # Reactive projects
-  projects_r <- reactiveVal(initial_projects)
+  projects_r <- reactiveVal(projects_df)
   
   # Ollama call
   output$ollama_response <- renderText({
@@ -139,8 +153,8 @@ server <- function(input, output, session) {
   output$projects_table <- renderReactable({
     reactable(
       filtered_projects(),
-      selection = "single",
-      onClick = JS("function(rowInfo) { Shiny.setInputValue('selected_row', rowInfo.index + 1); }"),
+      highlight = TRUE,
+      onClick = JS("function(rowInfo) { Shiny.setInputValue('selected_row', rowInfo.index + 1, {priority: 'event'}); }"),
       columns = list(
         Start_Date = colDef(cell = function(value) format(value, "%Y-%m-%d")),
         End_Date   = colDef(cell = function(value) format(value, "%Y-%m-%d"))
@@ -165,20 +179,16 @@ server <- function(input, output, session) {
       ),
       easyClose = TRUE
     ))
-    
-    # Store sel in session for saving
     session$userData$sel_index <- sel
   })
   
   observeEvent(input$save_edit, {
     sel <- isolate(session$userData$sel_index)
-    pr <- projects_r()
-    # Find project in full list by matching row
-    full <- pr
-    # Update full list at the correct position
-    # Assuming unfiltered index maps directly
-    row_idx <- which(pr$Project == filtered_projects()[sel,]$Project)
-    full[row_idx,] <- tibble::tibble(
+    full <- projects_r()
+    # Map filtered index back to full index
+    filtered <- filtered_projects()
+    orig_idx <- which(full$Project == filtered[sel,]$Project & full$Start_Date == filtered[sel,]$Start_Date)
+    full[orig_idx,] <- tibble::tibble(
       Project = input$edit_name,
       Owner = input$edit_owner,
       Start_Date = input$edit_dates[1],
@@ -187,11 +197,11 @@ server <- function(input, output, session) {
       Status = input$edit_status
     )
     projects_r(full)
+    write_parquet(full, project_file)
     removeModal()
-    showNotification("Project updated", type = "message")
+    showNotification("Project updated and saved", type = "message")
   })
   
-  # Add project
   observeEvent(input$add_project, {
     new <- tibble::tibble(
       Project = input$proj_name,
@@ -201,8 +211,10 @@ server <- function(input, output, session) {
       Category = input$proj_cat,
       Status = "Active"
     )
-    projects_r(bind_rows(projects_r(), new))
-    showNotification("Project added", type = "message")
+    updated <- bind_rows(projects_r(), new)
+    projects_r(updated)
+    write_parquet(updated, project_file)
+    showNotification("Project added and saved", type = "message")
   })
   
   # Capacity plot
