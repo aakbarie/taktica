@@ -1,0 +1,124 @@
+---
+title: "Taktica"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: cosmo
+    runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(plotly)
+library(reactable)
+library(dplyr)
+library(arrow)
+library(lubridate)
+library(shinyWidgets)
+library(httr)
+library(jsonlite)
+
+# Mock data
+team_members <- tibble(
+  Name = c("Akbar", "Amanda", "Steve", "Romina"),
+  Role = c("Manager", "Senior DS", "Senior DS", "Junior DS"),
+  Weekly_Capacity_Hours = c(20, 40, 40, 15)
+)
+projects <- tibble(
+  Project = c("HNI 360", "Readmission GenAI", "DUR Risk Flag"),
+  Owner = c("Amanda", "Steve", "Akbar"),
+  Start_Date = as.Date(c("2024-08-01", "2024-09-01", "2024-08-20")),
+  End_Date = as.Date(c("2024-11-01", "2024-10-15", "2024-09-20")),
+  Category = c("Evaluation", "GenAI", "ML"),
+  Status = c("Active", "Active", "Active")
+)
+allocations <- tibble(
+  Week = rep(seq(as.Date("2024-08-01"), by = "week", length.out = 6), each = 4),
+  Name = rep(c("Akbar", "Amanda", "Steve", "Romina"), times = 6),
+  Project = rep(c("DUR Risk Flag", "HNI 360", "Readmission GenAI", NA), times = 6),
+  Hours_Allocated = c(10,30,35,0,10,30,35,0,10,30,35,0,10,30,35,0,10,30,35,0,10,30,35,0)
+)
+```
+
+Sidebar {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+# Filters and GenAI prompt
+textInput("ask", "Ask Taktica (via Ollama)", "What is our current project load?")
+verbatimTextOutput("ollama_response")
+
+selectInput("filter_owner", "Filter by Owner", choices = c("All", unique(projects$Owner)), selected = "All")
+selectInput("filter_category", "Filter by Category", choices = c("All", unique(projects$Category)), selected = "All")
+```
+
+Row
+-----------------------------------------------------------------------
+Column {data-width=600}
+### Strategic KPIs
+```{r}
+total_capacity <- sum(team_members$Weekly_Capacity_Hours)
+total_allocated <- sum(allocations$Hours_Allocated)
+
+fluidRow(
+  valueBox(round(100 * total_allocated / total_capacity,1), "Team Utilization (%)"),
+  valueBox(nrow(projects), "Active Projects"),
+  valueBox(round(100 * sum(projects$Category=="GenAI")/nrow(projects),1), "% GenAI Projects")
+)
+```
+
+
+### Current Projects & Add New
+```{r}
+# Project list
+filtered_projects <- reactive({
+  df <- projects
+  if(input$filter_owner!="All") df <- filter(df, Owner==input$filter_owner)
+  if(input$filter_category!="All") df <- filter(df, Category==input$filter_category)
+  df
+})
+
+renderReactable({
+  reactable(filtered_projects(), searchable=TRUE, highlight=TRUE)
+})
+
+# Add project form
+hr()
+textInput("proj_name","Project Name")
+textInput("proj_owner","Owner")
+dateRangeInput("proj_dates","Timeline")
+selectInput("proj_cat","Category",choices=c("Evaluation","ML","GenAI","Shiny App"))
+actionButton("add_project","Add Project")
+observeEvent(input$add_project, showModal(modalDialog("Project added (not persisted)", easyClose=TRUE)))
+```
+
+Row
+-----------------------------------------------------------------------
+Column {data-width=400}
+
+### Capacity & Historical
+```{r}
+# Weekly capacity plot
+output$capacity_plot <- renderPlotly({
+  weekly_summary <- allocations %>%
+    group_by(Week,Name) %>% summarise(Hours=sum(Hours_Allocated),.groups="drop")
+  plot_ly(weekly_summary,x=~Week,y=~Hours,color=~Name,type="bar")
+})
+plotlyOutput("capacity_plot")
+
+hr()
+# Historical table
+historical_summary <- allocations %>% group_by(Name,Week) %>% summarise(Hours=sum(Hours_Allocated),.groups="drop")
+reactable(historical_summary)
+```
+
+Row
+-----------------------------------------------------------------------
+Column {data-width=400}
+
+### Simulation
+```{r}
+sliderInput("extra_hours","Add Hours for Steve",0,40,10)
+renderText({ paste("Steve's new capacity:", 40+input$extra_hours) })
+```
