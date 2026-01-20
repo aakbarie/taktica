@@ -522,9 +522,47 @@ server <- function(input, output, session) {
     relationships_data(updated_relationships)
     save_csv_data(updated_relationships, relationships_file)
 
+    # Sync business partners from relationships back to business_partners_data
+    # Extract unique business partners with their departments and divisions
+    unique_partners <- updated_relationships %>%
+      select(`DIRECTORS/MANAGERS`, `DEPARTMENT (Bus.)`, DIVISION) %>%
+      distinct() %>%
+      filter(!is.na(`DIRECTORS/MANAGERS`)) %>%
+      rename(
+        Business_Partner = `DIRECTORS/MANAGERS`,
+        Department = `DEPARTMENT (Bus.)`,
+        Division = DIVISION
+      )
+
+    # Get current business partners
+    current_partners <- business_partners_data()
+
+    # Find new or updated partners
+    for (i in 1:nrow(unique_partners)) {
+      partner_name <- unique_partners$Business_Partner[i]
+      partner_dept <- unique_partners$Department[i]
+      partner_div <- unique_partners$Division[i]
+
+      # Check if partner exists
+      existing_idx <- which(current_partners$Business_Partner == partner_name)
+
+      if (length(existing_idx) == 0) {
+        # Add new partner
+        current_partners <- rbind(current_partners, unique_partners[i, ])
+      } else {
+        # Update existing partner's department and division
+        current_partners[existing_idx, "Department"] <- partner_dept
+        current_partners[existing_idx, "Division"] <- partner_div
+      }
+    }
+
+    # Update reactive value and save
+    business_partners_data(current_partners)
+    save_csv_data(current_partners, business_partners_file)
+
     showModal(modalDialog(
       title = "Relationships Updated",
-      "The relationships have been saved.",
+      "The relationships and business partners have been saved.",
       easyClose = TRUE,
       footer = NULL
     ))
