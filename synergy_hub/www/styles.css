@@ -1,0 +1,463 @@
+/* Synergy Hub - Custom Styles */
+
+/* Color Palette */
+:root {
+  --primary-color: #024950;
+  --secondary-color: #66C0DC;
+  --accent-warm: #F79E02;
+  --accent-red: #E7717D;
+  --neutral-light: #F3E0DC;
+  --text-dark: #2c3e50;
+  --success-green: #27ae60;
+  --warning-orange: #f39c12;
+  --danger-red: #c0392b;
+}
+
+/* Global Styles */
+body {
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  color: var(--text-dark);
+}
+
+/* Header Styling */
+.main-header .logo {
+  background-color: var(--primary-color) !important;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.main-header .navbar {
+  background-color: var(--primary-color) !important;
+}
+
+/* Sidebar Styling */
+.main-sidebar {
+  background-color: #2c3e50 !important;
+}
+
+.sidebar-menu > li > a {
+  color: #ecf0f1 !important;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-menu > li > a:hover {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.sidebar-menu > li.active > a {
+  background-color: var(--secondary-color) !important;
+  color: #ffffff !important;
+  border-left: 4px solid var(--accent-warm);
+}
+
+/* Box Styling */
+.box {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.box-header {
+  border-bottom: 2px solid #f4f4f4;
+  padding: 15px;
+}
+
+.box.box-primary {
+  border-top-color: var(--primary-color);
+}
+
+.box.box-info {
+  border-top-color: var(--secondary-color);
+}
+
+.box.box-warning {
+  border-top-color: var(--warning-orange);
+}
+
+.box.box-danger {
+  border-top-color: var(--danger-red);
+}
+
+/* Button Styling */
+.btn {
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-success {
+  background-color: var(--success-green);
+  border-color: var(--success-green);
+}
+
+.btn-warning {
+  background-color: var(--warning-orange);
+  border-color: var(--warning-orange);
+}
+
+.btn-danger {
+  background-color: var(--danger-red);
+  border-color: var(--danger-red);
+}
+
+#submit {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Input Styling */
+.form-control {
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 0.2rem rgba(102, 192, 220, 0.25);
+}
+
+/* Numeric Input Styling */
+input[type="number"] {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Text Area Styling */
+textarea.form-control {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* DataTable Styling */
+.dataTables_wrapper {
+  padding: 10px;
+}
+
+table.dataTable {
+  border-collapse: collapse;
+  width: 100% !important;
+}
+
+table.dataTable thead th {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: bold;
+  padding: 12px;
+  border: none;
+}
+
+table.dataTable tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+table.dataTable tbody tr:hover {
+  background-color: rgba(102, 192, 220, 0.1);
+  cursor: pointer;
+}
+
+table.dataTable tbody td {
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+table.dataTable tbody tr.selected {
+  background-color: rgba(102, 192, 220, 0.3) !important;
+}
+
+/* Score Input Styling */
+#service_score, #work_score {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* Guiding Questions Box */
+.box-info ul {
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+.box-info li {
+  margin-bottom: 10px;
+}
+
+/* Follow-up Question Styling */
+#follow_up_question {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  min-height: 50px;
+  text-align: center;
+}
+
+/* Modal Styling */
+.modal-content {
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  background-color: var(--primary-color);
+  color: white;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.modal-header .close {
+  color: white;
+  opacity: 0.8;
+}
+
+.modal-header .close:hover {
+  opacity: 1;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 15px;
+}
+
+/* Plot Styling */
+.plotly {
+  border-radius: 6px;
+}
+
+/* Sankey Diagram Container */
+#sankey_plot {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+/* Action Button Group Styling */
+.box .btn {
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+/* Personnel Management Tables */
+#its_personnel_table_wrapper,
+#business_partners_table_wrapper {
+  margin-bottom: 15px;
+}
+
+/* Relationship Management Section */
+#relationship_ui {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+/* Checkbox Group Styling */
+.checkbox {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.checkbox label {
+  font-weight: normal;
+  display: block;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.checkbox label:hover {
+  background-color: rgba(102, 192, 220, 0.1);
+}
+
+.checkbox input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+/* Welcome Box Styling */
+.box-primary .box-body {
+  font-size: 16px;
+  line-height: 1.8;
+  padding: 30px;
+}
+
+/* Tooltip Styling for Truncated Text */
+span[title] {
+  cursor: help;
+  border-bottom: 1px dotted #999;
+}
+
+/* Score Indicator Colors */
+.score-low {
+  color: var(--danger-red);
+  font-weight: bold;
+}
+
+.score-medium {
+  color: var(--warning-orange);
+  font-weight: bold;
+}
+
+.score-high {
+  color: var(--success-green);
+  font-weight: bold;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .box-header {
+    padding: 10px;
+  }
+
+  .modal-dialog {
+    margin: 10px;
+  }
+
+  #submit {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  table.dataTable thead th,
+  table.dataTable tbody td {
+    padding: 8px;
+    font-size: 12px;
+  }
+}
+
+/* Loading Spinner */
+.shiny-busy {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+}
+
+/* Success Message Styling */
+.shiny-notification {
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.shiny-notification-message {
+  font-size: 14px;
+}
+
+/* Home Page Welcome Styling */
+.content-wrapper {
+  background-color: #f4f6f9;
+}
+
+/* Score Analysis Plot Container */
+#score_plot {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+/* How-To Guide Styling */
+.box-body h1 {
+  color: var(--primary-color);
+  font-size: 28px;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--secondary-color);
+  padding-bottom: 10px;
+}
+
+.box-body h2 {
+  color: var(--primary-color);
+  font-size: 22px;
+  margin-top: 25px;
+  margin-bottom: 15px;
+}
+
+.box-body h3 {
+  color: var(--text-dark);
+  font-size: 18px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.box-body p {
+  line-height: 1.7;
+  margin-bottom: 15px;
+}
+
+.box-body ul, .box-body ol {
+  line-height: 1.8;
+  margin-bottom: 15px;
+  padding-left: 30px;
+}
+
+.box-body code {
+  background-color: #f4f4f4;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  color: var(--primary-color);
+}
+
+.box-body pre {
+  background-color: #f4f4f4;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid var(--secondary-color);
+  overflow-x: auto;
+}
+
+/* Table of Contents Styling */
+.box-body a {
+  color: var(--secondary-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.box-body a:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+/* Emphasis Boxes in Guide */
+.box-body blockquote {
+  border-left: 4px solid var(--accent-warm);
+  padding-left: 15px;
+  margin-left: 0;
+  color: #666;
+  font-style: italic;
+}
+
+/* Icons */
+.fa, .glyphicon {
+  margin-right: 8px;
+}
+
+/* Print Styles */
+@media print {
+  .main-sidebar,
+  .main-header,
+  .btn {
+    display: none;
+  }
+
+  .content-wrapper {
+    margin-left: 0 !important;
+  }
+}
