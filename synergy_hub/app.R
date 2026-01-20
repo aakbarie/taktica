@@ -183,7 +183,8 @@ server <- function(input, output, session) {
       escape = FALSE,
       options = list(
         pageLength = 5,
-        autoWidth = TRUE
+        autoWidth = TRUE,
+        order = list(list(0, 'desc'))  # Sort by Date column (index 0) descending
       )
     )
   })
@@ -206,6 +207,7 @@ server <- function(input, output, session) {
       options = list(
         pageLength = 5,
         autoWidth = TRUE,
+        order = list(list(0, 'desc')),  # Sort by Date column (index 0) descending
         selection = 'single'
       )
     )
@@ -279,6 +281,7 @@ server <- function(input, output, session) {
       options = list(
         pageLength = 5,
         autoWidth = TRUE,
+        order = list(list(0, 'desc')),  # Sort by Date column (index 0) descending
         columnDefs = list(list(visible = FALSE,
                                targets = which(names(unresolved_display) == "Row_Number") - 1)),
         selection = 'single'
