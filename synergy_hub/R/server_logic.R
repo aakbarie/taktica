@@ -281,6 +281,15 @@ update_relationships <- function(relationships_data, its_personnel,
     return(relationships_data)
   }
 
+  # Remove existing relationships for the selected ITS personnel
+  updated_relationships <- relationships_data %>%
+    filter(`PARTNER (IT)` != its_personnel)
+
+  # Handle NULL or empty assigned_business_partners (means remove all relationships)
+  if (is.null(assigned_business_partners) || length(assigned_business_partners) == 0) {
+    return(updated_relationships)
+  }
+
   # Create new relationships
   new_relationships <- data.frame(
     `PARTNER (IT)` = its_personnel,
@@ -298,10 +307,6 @@ update_relationships <- function(relationships_data, its_personnel,
       DIVISION = Division
     ) %>%
     select(`PARTNER (IT)`, `DIRECTORS/MANAGERS`, `DEPARTMENT (Bus.)`, DIVISION)
-
-  # Remove existing relationships for the selected ITS personnel
-  updated_relationships <- relationships_data %>%
-    filter(`PARTNER (IT)` != its_personnel)
 
   # Add the new relationships
   updated_relationships <- bind_rows(updated_relationships, new_relationships)
