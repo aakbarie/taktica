@@ -1,4 +1,59 @@
+# R project files
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+.httr-oauth
+
+# RStudio files
+*.Rproj
+
+# Data files (keep structure, ignore actual data)
+data/*.parquet
+data/*_backup_*.parquet
+!data/.gitkeep
+
+# Log files
+logs/
+*.log
+
+# Environment files (sensitive)
+.Renviron.local
+.env
+
+# Package management
+renv/
+packrat/
+.Rprofile
+
+# Testing
+tests/testthat/*.Rout
+tests/testthat/*.Rcheck
+
+# Coverage reports
+coverage/
+*.gcov
+.coverage
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary files
+*~
+*.swp
+*.swo
+.*.swp
+.*.swo
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# Deployment
+rsconnect/
+manifest.json.bak

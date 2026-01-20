@@ -1,0 +1,46 @@
+default:
+  app_name: "Taktica"
+  data_dir: "data"
+  max_file_size_mb: 100
+  ollama:
+    url: "http://localhost:11434"
+    model: "phi3"
+    timeout: 10
+    stream: false
+  logging:
+    level: "INFO"
+    file: "logs/taktica.log"
+  features:
+    enable_ai: true
+    enable_forecasting: true
+    enable_export: true
+    enable_authentication: false
+
+development:
+  logging:
+    level: "DEBUG"
+  ollama:
+    url: "http://localhost:11434"
+
+production:
+  data_dir: "/data/taktica"
+  logging:
+    level: "WARN"
+    file: "/var/log/taktica/app.log"
+  ollama:
+    url: "http://ollama-gpu:11434"
+    timeout: 30
+  features:
+    enable_authentication: true
+  posit_connect:
+    enabled: true
+    use_gpu: true
+
+testing:
+  data_dir: "tests/test_data"
+  logging:
+    level: "DEBUG"
+  ollama:
+    url: "http://localhost:11434"
+  features:
+    enable_ai: false

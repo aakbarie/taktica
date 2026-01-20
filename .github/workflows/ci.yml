@@ -1,0 +1,250 @@
+name: Taktica CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, 'claude/**']
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        r-version: ['4.1.0', '4.2.0', '4.3.0']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r-version }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libfontconfig1-dev \
+            libharfbuzz-dev \
+            libfribidi-dev
+
+      - name: Cache R packages
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-r-${{ matrix.r-version }}-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: |
+            ${{ runner.os }}-r-${{ matrix.r-version }}-
+
+      - name: Install dependencies
+        run: |
+          install.packages(c("remotes", "rcmdcheck", "covr"))
+          remotes::install_deps(dependencies = TRUE)
+        shell: Rscript {0}
+
+      - name: Check package
+        run: |
+          rcmdcheck::rcmdcheck(args = "--no-manual", error_on = "warning")
+        shell: Rscript {0}
+
+      - name: Run tests
+        run: |
+          testthat::test_dir("tests/testthat")
+        shell: Rscript {0}
+
+      - name: Calculate coverage
+        if: matrix.r-version == '4.3.0'
+        run: |
+          covr::codecov(
+            type = "tests",
+            quiet = FALSE,
+            clean = FALSE
+          )
+        shell: Rscript {0}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3.0'
+
+      - name: Install lintr
+        run: |
+          install.packages("lintr")
+        shell: Rscript {0}
+
+      - name: Run lintr
+        run: |
+          lintr::lint_package()
+        shell: Rscript {0}
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: taktica/app
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-docker]
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install rsconnect
+        run: |
+          install.packages("rsconnect")
+        shell: Rscript {0}
+
+      - name: Deploy to Posit Connect Staging
+        env:
+          CONNECT_SERVER: ${{ secrets.CONNECT_STAGING_SERVER }}
+          CONNECT_API_KEY: ${{ secrets.CONNECT_STAGING_API_KEY }}
+        run: |
+          rsconnect::setAccountInfo(
+            name = "staging",
+            server = Sys.getenv("CONNECT_SERVER"),
+            apiKey = Sys.getenv("CONNECT_API_KEY")
+          )
+          rsconnect::deployApp(
+            appDir = ".",
+            appFiles = c("app/app_v2.R", "R/", "config/", "DESCRIPTION"),
+            appName = "taktica-staging",
+            server = "staging",
+            forceUpdate = TRUE
+          )
+        shell: Rscript {0}
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-docker]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://connect.company.com/taktica
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install rsconnect
+        run: |
+          install.packages("rsconnect")
+        shell: Rscript {0}
+
+      - name: Deploy to Posit Connect Production
+        env:
+          CONNECT_SERVER: ${{ secrets.CONNECT_PROD_SERVER }}
+          CONNECT_API_KEY: ${{ secrets.CONNECT_PROD_API_KEY }}
+        run: |
+          rsconnect::setAccountInfo(
+            name = "production",
+            server = Sys.getenv("CONNECT_SERVER"),
+            apiKey = Sys.getenv("CONNECT_API_KEY")
+          )
+          rsconnect::deployApp(
+            appDir = ".",
+            appFiles = c("app/app_v2.R", "R/", "config/", "DESCRIPTION"),
+            appName = "taktica",
+            server = "production",
+            forceUpdate = TRUE
+          )
+        shell: Rscript {0}
+
+      - name: Notify deployment
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "Taktica deployed to production successfully!",
+              attachments: [{
+                color: 'good',
+                text: `Commit: ${process.env.AS_COMMIT}\nAuthor: ${process.env.AS_AUTHOR}\nBranch: ${process.env.AS_REF}`
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
