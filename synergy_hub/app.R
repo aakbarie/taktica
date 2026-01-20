@@ -12,16 +12,17 @@ library(ggplot2)
 library(arrow)
 library(plotly)
 
+# Load configuration (contains file paths and settings)
+# IMPORTANT: Edit config.R to change file paths, not this file!
+source("config.R")
+
 # Source modular components
 source("R/data_utils.R")
 source("R/ui_components.R")
 source("R/server_logic.R")
 
-# File paths for saving entries and management data
-entries_file <- "/mnt/data_science/ShinyAppsData/BRM/entries.parquet"
-its_personnel_file <- "/mnt/data_science/ShinyAppsData/BRM/its_personnel.csv"
-business_partners_file <- "/mnt/data_science/ShinyAppsData/BRM/business_partners.csv"
-relationships_file <- "/mnt/data_science/ShinyAppsData/BRM/brm_assignments.csv"
+# Note: File paths are now defined in config.R
+# This protects your configuration from accidental loss
 
 # Load existing data
 saved_entries <- load_entries(entries_file)
